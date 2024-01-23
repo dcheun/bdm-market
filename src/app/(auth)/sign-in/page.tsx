@@ -13,12 +13,27 @@ import { trpc } from '@/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { ZodError } from 'zod';
 
 const Page = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isSeller = searchParams.get('as') === 'seller';
+  const origin = searchParams.get('origin');
+
+  // Give user option to login as seller or customer by
+  // pushing the options in the href.
+  const continueAsSeller = () => {
+    router.push('?as=seller');
+  };
+
+  const continueAsBuyer = () => {
+    router.replace('/sign-in', undefined);
+  };
+
   const {
     register,
     handleSubmit,
@@ -27,30 +42,32 @@ const Page = () => {
     resolver: zodResolver(AuthCredentialsValidator),
   });
 
-  const router = useRouter();
-
-  const { mutate, isLoading } = trpc.auth.createPayloadUser.useMutation({
+  const { mutate: signIn, isLoading } = trpc.auth.signIn.useMutation({
     onError: (err) => {
-      if (err.data?.code === 'CONFLICT') {
-        toast.error('This email is already in use. Sign in instead.');
-        return;
+      if (err.data?.code === 'UNAUTHORIZED') {
+        toast.error('Invalid email or password.');
       }
-
-      if (err instanceof ZodError) {
-        toast.error(err.issues[0].message);
-        return;
-      }
-
-      toast.error('Something went wrong. Please try again.');
     },
-    onSuccess: ({ sentToEmail }) => {
-      toast.success(`Verification email sent to ${sentToEmail}.`);
-      router.push('/verify-email?to=' + sentToEmail);
+    onSuccess: () => {
+      toast.success('Signed in successfully');
+
+      if (origin) {
+        router.push(`/${origin}`);
+        return;
+      }
+
+      if (isSeller) {
+        router.push('/sell');
+        return;
+      }
+
+      router.push('/');
+      router.refresh();
     },
   });
 
   const onSubmit = ({ email, password }: TAuthCredentialsValidator) => {
-    mutate({ email, password });
+    signIn({ email, password });
   };
 
   return (
@@ -60,16 +77,16 @@ const Page = () => {
           <div className="flex flex-col items-center space-y-2 text-center">
             <Icons.logo className="h-20 w-20" />
             <h1 className="text-2xl font-semibold tracking-tight">
-              Create an account
+              Sign in to your {isSeller ? 'seller' : ''} account
             </h1>
             <Link
               className={buttonVariants({
                 variant: 'link',
                 className: 'gap-1.5',
               })}
-              href="/sign-in"
+              href="/sign-up"
             >
-              Already have an account? Sign in
+              Don&apos;t have an account? Sign up
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -110,9 +127,41 @@ const Page = () => {
                   )}
                 </div>
 
-                <Button>Sign up</Button>
+                <Button>Sign in</Button>
               </div>
             </form>
+
+            <div className="relative">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 flex items-center"
+              >
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  or
+                </span>
+              </div>
+            </div>
+
+            {isSeller ? (
+              <Button
+                onClick={continueAsBuyer}
+                variant="secondary"
+                disabled={isLoading}
+              >
+                Continue as customer
+              </Button>
+            ) : (
+              <Button
+                onClick={continueAsSeller}
+                variant="secondary"
+                disabled={isLoading}
+              >
+                Continue as seller
+              </Button>
+            )}
           </div>
         </div>
       </div>
