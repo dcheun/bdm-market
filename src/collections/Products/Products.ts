@@ -43,14 +43,14 @@ export const Products: CollectionConfig = {
       type: 'select',
       options: PRODUCT_CATEGORIES.map(({ label, value }) => ({ label, value })),
     },
-    // {
-    //   name: 'product_files',
-    //   label: 'Product file(s)',
-    //   type: 'relationship',
-    //   required: true,
-    //   relationTo: 'product_files',
-    //   hasMany: false,
-    // },
+    {
+      name: 'product_files',
+      label: 'Product file(s)',
+      type: 'relationship',
+      required: true,
+      relationTo: 'product_files',
+      hasMany: false,
+    },
     // Ability for admins to audit products.
     {
       name: 'approvedForSale',
