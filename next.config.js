@@ -8,8 +8,14 @@ const nextConfig = {
         port: '3000',
         protocol: 'http',
       },
+      {
+        hostname: '127.0.0.1',
+        pathname: '**',
+        port: '3000',
+        protocol: 'http',
+      },
     ],
   },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
