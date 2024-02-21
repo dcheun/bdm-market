@@ -103,6 +103,7 @@ const Cart = () => {
                 src='/hippo-empty-cart.png'
                 fill
                 alt='empty shopping cart hippo'
+                sizes='100vw'
               />
             </div>
             <div className='text-xl font-semibold'>Your cart is empty</div>
