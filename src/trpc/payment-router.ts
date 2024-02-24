@@ -3,7 +3,7 @@ import type Stripe from 'stripe'
 import { z } from 'zod'
 import { getPayloadClient } from '../get-payload'
 import { stripe } from '../lib/stripe'
-import { privateProcedure, router } from './trpc'
+import { privateProcedure, publicProcedure, router } from './trpc'
 
 export const paymentRouter = router({
   createSession: privateProcedure
@@ -59,7 +59,7 @@ export const paymentRouter = router({
         const stripeSession = await stripe.checkout.sessions.create({
           success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/thank-you?orderId=${order.id}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/cart`,
-          payment_method_types: ['card', 'paypal'],
+          payment_method_types: ['card'],
           mode: 'payment',
           metadata: {
             userId: user.id,
@@ -73,5 +73,29 @@ export const paymentRouter = router({
         console.error(err)
         return { url: null }
       }
+    }),
+  pollOrderStatus: publicProcedure
+    .input(z.object({ orderId: z.string() }))
+    .query(async ({ input }) => {
+      const { orderId } = input
+
+      const payload = await getPayloadClient()
+
+      const { docs: orders } = await payload.find({
+        collection: 'orders',
+        where: {
+          id: {
+            equals: orderId,
+          },
+        },
+      })
+
+      if (!orders.length) {
+        throw new TRPCError({ code: 'NOT_FOUND' })
+      }
+
+      const [order] = orders
+
+      return { isPaid: order._isPaid }
     }),
 })
