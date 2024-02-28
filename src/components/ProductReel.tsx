@@ -13,10 +13,10 @@ interface ProductReelProps {
   query: TQueryValidator
 }
 
+const FALLBACK_LIMIT = 4
+
 const ProductReel = (props: ProductReelProps) => {
   const { title, subtitle, href, query } = props
-
-  const FALLBACK_LIMIT = 4
 
   const { data: queryResults, isLoading } =
     trpc.getInfiniteProducts.useInfiniteQuery(

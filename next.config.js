@@ -14,6 +14,11 @@ const nextConfig = {
         port: '3000',
         protocol: 'http',
       },
+      {
+        hostname: 'bdm-market.bigdymedia.com',
+        pathname: '**',
+        protocol: 'https',
+      },
     ],
   },
 }
